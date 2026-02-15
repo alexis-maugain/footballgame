@@ -1,11 +1,367 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Football Game</title>
+  <link rel="shortcut icon" href="assets/jeufoot/TemplateData/favicon.ico">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Inter:wght@400;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0a0f1a 0%, #0d1f2d 40%, #132a13 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background:
+        radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.15), transparent),
+        radial-gradient(2px 2px at 40% 70%, rgba(255,255,255,0.1), transparent),
+        radial-gradient(2px 2px at 60% 20%, rgba(255,255,255,0.12), transparent),
+        radial-gradient(2px 2px at 80% 50%, rgba(255,255,255,0.08), transparent),
+        radial-gradient(3px 3px at 10% 80%, rgba(34,197,94,0.2), transparent),
+        radial-gradient(3px 3px at 90% 10%, rgba(34,197,94,0.15), transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 40px 20px 20px;
+    }
+
+    header h1 {
+      font-family: 'Russo One', sans-serif;
+      font-size: 3.2rem;
+      background: linear-gradient(90deg, #22c55e, #4ade80, #86efac, #4ade80, #22c55e);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shine 3s linear infinite;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      filter: drop-shadow(0 0 30px rgba(34,197,94,0.3));
+    }
+
+    header p {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.95rem;
+      margin-top: 8px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    @keyframes shine {
+      to { background-position: 200% center; }
+    }
+
+    /* Game container */
+    #game-wrapper {
+      position: relative;
+      z-index: 1;
+      margin: 20px auto;
+      padding: 4px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #22c55e, #16a34a, #15803d, #16a34a, #22c55e);
+      background-size: 300% 300%;
+      animation: borderGlow 4s ease infinite;
+      box-shadow:
+        0 0 40px rgba(34,197,94,0.2),
+        0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    @keyframes borderGlow {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    #game-inner {
+      background: #0a0f1a;
+      border-radius: 13px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #unity-container {
+      position: relative;
+      width: 960px;
+      height: 600px;
+    }
+
+    #unity-canvas {
+      width: 960px;
+      height: 600px;
+      display: block;
+      border-radius: 12px;
+    }
+
+    #unity-loading-bar {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      text-align: center;
+    }
+
+    #unity-logo {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 20px;
+      background: url('assets/jeufoot/TemplateData/unity-logo-dark.png') no-repeat center;
+      background-size: contain;
+    }
+
+    #unity-progress-bar-empty {
+      width: 260px;
+      height: 16px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(34,197,94,0.3);
+    }
+
+    #unity-progress-bar-full {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, #4ade80);
+      border-radius: 8px;
+      transition: width 0.2s ease;
+      box-shadow: 0 0 10px rgba(34,197,94,0.5);
+    }
+
+    #unity-warning {
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+
+    /* Footer bar under the game */
+    #game-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: rgba(255,255,255,0.03);
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    #game-footer .title {
+      color: rgba(255,255,255,0.6);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    #fullscreen-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      letter-spacing: 0.5px;
+    }
+
+    #fullscreen-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(34,197,94,0.4);
+      background: linear-gradient(135deg, #4ade80, #22c55e);
+    }
+
+    #fullscreen-btn:active {
+      transform: translateY(0);
+    }
+
+    #fullscreen-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    /* Bottom info */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 30px 20px 40px;
+    }
+
+    footer .controls {
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    footer .control-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: rgba(255,255,255,0.4);
+      font-size: 0.8rem;
+    }
+
+    footer .key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 28px;
+      padding: 0 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: rgba(255,255,255,0.6);
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.5px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1000px) {
+      #unity-container, #unity-canvas {
+        width: 100vw;
+        height: calc(100vw * 600 / 960);
+      }
+      #game-wrapper {
+        border-radius: 0;
+        margin: 10px 0;
+      }
+      #game-inner { border-radius: 0; }
+      #unity-canvas { border-radius: 0; }
+      header h1 { font-size: 2rem; }
+    }
+  </style>
 </head>
 <body>
-    <h1>Hello World</h1>
+
+  <header>
+    <h1>⚽ Football Game</h1>
+    <p>Powered by Unity</p>
+  </header>
+
+  <div id="game-wrapper">
+    <div id="game-inner">
+      <div id="unity-container" class="unity-desktop">
+        <canvas id="unity-canvas" width="960" height="600" tabindex="-1"></canvas>
+        <div id="unity-loading-bar">
+          <div id="unity-logo"></div>
+          <div id="unity-progress-bar-empty">
+            <div id="unity-progress-bar-full"></div>
+          </div>
+        </div>
+        <div id="unity-warning"></div>
+      </div>
+      <div id="game-footer">
+        <span class="title">FOOTBALL GAME v0.1</span>
+        <button id="fullscreen-btn">
+          <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+          Plein écran
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="controls">
+      <div class="control-item"><span class="key">Z Q S D</span> Déplacement</div>
+      <div class="control-item"><span class="key">ESPACE</span> Action</div>
+      <div class="control-item"><span class="key">SOURIS</span> Viser</div>
+    </div>
+  </footer>
+
+  <script>
+    var canvas = document.querySelector("#unity-canvas");
+
+    function unityShowBanner(msg, type) {
+      var warningBanner = document.querySelector("#unity-warning");
+      function updateBannerVisibility() {
+        warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+      }
+      var div = document.createElement('div');
+      div.innerHTML = msg;
+      warningBanner.appendChild(div);
+      if (type == 'error') div.style = 'background: #dc2626; color: white; padding: 10px; border-radius: 8px; margin: 4px 0;';
+      else {
+        if (type == 'warning') div.style = 'background: #f59e0b; color: black; padding: 10px; border-radius: 8px; margin: 4px 0;';
+        setTimeout(function() {
+          warningBanner.removeChild(div);
+          updateBannerVisibility();
+        }, 5000);
+      }
+      updateBannerVisibility();
+    }
+
+    var buildUrl = "assets/jeufoot/Build";
+    var loaderUrl = buildUrl + "/new test2.loader.js";
+    var config = {
+      arguments: [],
+      dataUrl: buildUrl + "/new test2.data.br",
+      frameworkUrl: buildUrl + "/new test2.framework.js.br",
+      codeUrl: buildUrl + "/new test2.wasm.br",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "DefaultCompany",
+      productName: "Football Game",
+      productVersion: "0.1.0",
+      showBanner: unityShowBanner,
+    };
+
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      var meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+      document.getElementsByTagName('head')[0].appendChild(meta);
+      document.querySelector("#unity-container").className = "unity-mobile";
+      canvas.className = "unity-mobile";
+    } else {
+      canvas.style.width = "960px";
+      canvas.style.height = "600px";
+    }
+
+    document.querySelector("#unity-loading-bar").style.display = "block";
+
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = () => {
+      createUnityInstance(canvas, config, (progress) => {
+        document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+      }).then((unityInstance) => {
+        document.querySelector("#unity-loading-bar").style.display = "none";
+        document.querySelector("#fullscreen-btn").onclick = () => {
+          unityInstance.SetFullscreen(1);
+        };
+      }).catch((message) => {
+        alert(message);
+      });
+    };
+
+    document.body.appendChild(script);
+  </script>
 </body>
 </html>
